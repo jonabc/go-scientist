@@ -1,4 +1,13 @@
 ## Scientist
+This package is improved version of orginal repository: https://github.com/technoweenie/go-scientist. And can be used in production.
+## Changelog
+### Features
+1. Added experiment.RunAsyn() - Runs both control and candidate behaviours asynchronously  
+2. Added experiment.RunAsyncCandidatesOnly() - Runs candidates alone asynchronously and return control result as soon as control execution complete. This will greatly help if we want to test multiple versions of unit of work and compare the results and response times without affecting the current working flow.
+### Bug Fixes
+1. Added recovery handling to avoid application crashing in case of any unknown errors. 
+2. Adding named return value to observe method in scientist to handle panics. Ref:https://www.calhoun.io/using-named-return-variables-to-capture-panics-in-go/
+
 
 A Go port of a great Ruby library for carefully refactoring critical paths.
 Check out the original: https://github.com/github/scientist
