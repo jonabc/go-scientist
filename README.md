@@ -9,7 +9,7 @@ This package is improved version of orginal repository: https://github.com/techn
 2. Adding named return value to observe method in scientist to handle panics. Ref:https://www.calhoun.io/using-named-return-variables-to-capture-panics-in-go/
 
 
-A Go port of a great Ruby library for carefully refactoring critical paths.
+go-scientist is a port of a great Ruby library for carefully refactoring critical paths.
 Check out the original: https://github.com/github/scientist
 
 For a detailed look at actually using this thing, check out this blog post:
