@@ -1,11 +1,11 @@
 ## Scientist
-This package is improved version of orginal repository: https://github.com/technoweenie/go-scientist. And can be used in production.
+This package is improved version of orginal repository: https://github.com/technoweenie/go-scientist.
 ## Changelog
 ### Features
-1. Added experiment.RunAsyn() - Runs both control and candidate behaviours asynchronously  
+1. Added experiment.RunAsyn() - Runs both control and candidate behaviours asynchronously
 2. Added experiment.RunAsyncCandidatesOnly() - Runs candidates alone asynchronously and return control result as soon as control execution complete. This will greatly help if we want to test multiple versions of unit of work and compare the results and response times without affecting the current working flow.
 ### Bug Fixes
-1. Added recovery handling to avoid application crashing in case of any unknown errors. 
+1. Added recovery handling to avoid application crashing in case of any unknown errors.
 2. Adding named return value to observe method in scientist to handle panics. Ref:https://www.calhoun.io/using-named-return-variables-to-capture-panics-in-go/
 
 
@@ -15,11 +15,8 @@ Check out the original: https://github.com/github/scientist
 For a detailed look at actually using this thing, check out this blog post:
 [Move fast and fix things](http://githubengineering.com/move-fast/).
 
-NOTE: This port is an experiment in porting a small Ruby lib to Go. While I think
-the differences in the languages result in interesting comparisons and contrasts
-between the approaches, the Go version is _not_ used in production anywhere.
-Consider this alpha, unsupported software. The Ruby version, however, is very
-stable.
+NOTE: The Ruby version, however, is very stable. The differences in the languages result in interesting comparisons and contrasts
+between the approaches.  The Go version can be used in production.
 
 ## How do I science?
 
@@ -28,24 +25,30 @@ Let's pretend you're changing the way you handle permissions in a large web app.
 ```go
 package permissions
 
-import "scientist"
+import (
+	"context"
+
+	"github.com/freshworks/go-scientist"
+)
 
 type Widget struct {
   ...
 }
 
 func (w *Widget) Allows(u *User) (bool, error) {
+  ctx := context.Background()
+
   experiment := scientist.New("widget-permissions")
   // old way
-  experiment.Use(func() (interface{}, error) {
+  experiment.Use(func(ctx context.Context) (interface{}, error) {
     return w.IsValid(u), nil
   })
   // new way
-  experiment.Try(func() (interface{}, error) {
+  experiment.Try(func(ctx context.Context) (interface{}, error) {
     return u.Can("read", w), nil
   })
 
-  return scientist.Bool(experiment.Run())
+  return scientist.Bool(experiment.Run(ctx))
 }
 ```
 
@@ -60,7 +63,7 @@ Write a `Use` callback around the code's original behavior, and a `Try` around t
 
 The `Use` callback is called the **control**. The `Try` callback is called the **candidate**.
 
-TODO: mention helpers like scientist.Bool()
+scientist.Bool() is a helper function, can be used if return value is boolean
 
 If you don't declare any `Try` callbacks, none of the Scientist machinery is invoked and the control value is always returned.
 
@@ -97,22 +100,28 @@ The examples above will run, but they're not really *doing* anything. The `Try` 
 ```go
 package permissions
 
-import "scientist"
+import (
+    "context"
+
+    "github.com/freshworks/go-scientist"
+)
 
 type Widget struct {
   ...
 }
 
 func (w *Widget) Allows(u *User) (bool, error) {
+  ctx := context.Background()
+
   experiment := Experiment("widget-permissions")
-  experiment.Use(func() (interface{}, error) {
+  experiment.Use(func(ctx context.Context) (interface{}, error) {
     return w.IsValid(u), nil
   })
-  experiment.Try(func() (interface{}, error) {
+  experiment.Try(func(ctx context.Context) (interface{}, error) {
     u.Can("read", w)
   })
 
-  return scientist.Bool(experiment.Run())
+  return scientist.Bool(experiment.Run(ctx))
 }
 
 // experiment constructor for all uses in the "permissions" package
@@ -147,10 +156,10 @@ Scientist compares control and candidate values using `reflect.DeepEqual()`. To 
 ```go
 func (w *Widget) Allows(u *User) (bool, error) {
   experiment := Experiment("widget-permissions")
-  experiment.Use(func() (interface{}, error) {
+  experiment.Use(func(ctx context.Context) (interface{}, error) {
     return w.IsValid(u), nil
   })
-  experiment.Try(func() (interface{}, error) {
+  experiment.Try(func(ctx context.Context) (interface{}, error) {
     u.Can("read", w)
   })
 
@@ -176,10 +185,10 @@ Results aren't very useful without some way to identify them. Use the `context` 
 
 ```go
 experiment := Experiment("widget-permissions")
-experiment.Use(func() (interface{}, error) {
+experiment.Use(func(ctx context.Context) (interface{}, error) {
   return w.IsValid(u), nil
 })
-experiment.Try(func() (interface{}, error) {
+experiment.Try(func(ctx context.Context) (interface{}, error) {
   u.Can("read", w)
 })
 experiment.Context["user"] = fmt.Sprintf("%d", user.Id)
@@ -193,14 +202,14 @@ If an experiment requires expensive setup that should only occur when the experi
 
 ```go
 experiment := Experiment("widget-permissions")
-experiment.Use(func() (interface{}, error) {
+experiment.Use(func(ctx context.Context) (interface{}, error) {
   return w.IsValid(u), nil
 })
 experiment.BeforeRun(func() error {
   // something expensive...
   return nil
 })
-experiment.Try(func() (interface{}, error) {
+experiment.Try(func(ctx context.Context) (interface{}, error) {
   u.Can("read", w)
 })
 ```
@@ -211,10 +220,10 @@ Sometimes you don't want to store the full value for later analysis. For example
 
 ```go
 experiment := Experiment("widget-permissions")
-experiment.Use(func() (interface{}, error) {
+experiment.Use(func(ctx context.Context) (interface{}, error) {
   return w.IsValid(u), nil
 })
-experiment.Try(func() (interface{}, error) {
+experiment.Try(func(ctx context.Context) (interface{}, error) {
   u.Can("read", w)
 })
 
@@ -248,11 +257,12 @@ During the early stages of an experiment, it's possible that some of your code w
 
 ```go
 func (w *Widget) IsAdmin(u *User) (bool, error) {
+  ctx := context.Background()
   experiment := Experiment("widget-permissions")
-  experiment.Use(func() (interface{}, error) {
+  experiment.Use(func(ctx context.Context) (interface{}, error) {
     return w.IsAdmin(u), nil
   })
-  experiment.Try(func() (interface{}, error) {
+  experiment.Try(func(ctx context.Context) (interface{}, error) {
     u.Can("admin", w)
   })
 
@@ -263,7 +273,7 @@ func (w *Widget) IsAdmin(u *User) (bool, error) {
   experiment.Ignore(func(control, candidate interface{}) (bool, error) {
     return control != nil && candidate == nil && !u.HasConfirmedEmail, nil
   })
-  return scientist.Bool(experiment.Run())
+  return scientist.Bool(experiment.Run(ctx))
 }
 ```
 
@@ -328,7 +338,9 @@ To raise on mismatches:
 
 ```go
 // do this in a *_test.go file so it's set on tests only
-import "scientist"
+import (
+    "github.com/freshworks/go-scientist"
+)
 
 func init() {
   scientist.ErrorOnMismatches = true
@@ -405,7 +417,7 @@ To try more than one alternative at once, add names to some `Behavior` callbacks
 
 ```go
 experiment := scientist.New("widget-permissions")
-experiment.Use(func() (interface{}, error) {
+experiment.Use(func(ctx context.Context) (interface{}, error) {
   return w.IsValid(u), nil
 })
 
@@ -428,7 +440,7 @@ Define the candidates with named `Behavior` callbacks, omit a `Use`, and pass a 
 
 ```go
 experiment := scientist.New("widget-permissions")
-experiment.Use(func() (interface{}, error) {
+experiment.Use(func(ctx context.Context) (interface{}, error) {
   return w.IsValid(u), nil
 })
 
@@ -447,9 +459,10 @@ experiment.RunBehavior("second-way")
 
 ## Hacking
 
-Run `go fmt` before committing. `go test` runs the unit tests. The scientist
-package was written on Go 1.5+, but may work on older Go 1.x versions.
+Run `go fmt` before committing. `go test` runs the unit tests.
+Supported Go 1.11+
 
 ## Maintainers
-
-nope.
+[@Sreevani871](https://github.com/Sreevani871),
+[@RashmiRam](https://github.com/RashmiRam) and
+[@kinnera-kokkiligadda](https://github.com/kinnera-kokkiligadda)
