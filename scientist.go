@@ -72,10 +72,6 @@ func RunAsync(ctx context.Context, e *Experiment, controlBehavior string) Result
 	return r
 }
 
-/*
-Note: Do not pass the original request context to RunAsyncCandidatesOnly function instead create new context from the original request context and pass it.
-Because if the original context is used, as soon as control completes its execution, context will be cancelled by caller, that will result in context cancellation of candidates running asynchronously.
-*/
 func RunAsyncCandidatesOnly(ctx context.Context, e *Experiment, controlBehavior string) Result {
 	var (
 		r      = Result{Experiment: e}
@@ -99,7 +95,7 @@ func RunAsyncCandidatesOnly(ctx context.Context, e *Experiment, controlBehavior 
 		if len(r.Errors) > 0 {
 			e.errorReporter(r.Errors...)
 		}
-	}(ctx, e, r.Control)
+	}(context.WithoutCancel(ctx), e, r.Control)
 
 	return r
 }
