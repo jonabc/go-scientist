@@ -2,7 +2,6 @@ package scientist
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -251,7 +250,7 @@ func observe(ctx context.Context, e *Experiment, name string, b behaviorFunc) (o
 
 	defer func() {
 		if r := recover(); r != nil {
-			o.Err = errors.New(fmt.Sprintf("recover from bad behavior %s: %v", name, r))
+			o.Err = fmt.Errorf("recover from bad behavior %s: %v", name, r)
 		}
 	}()
 

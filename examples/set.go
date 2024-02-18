@@ -44,7 +44,9 @@ func main() {
 
 func Run(controlFn func(ctx context.Context) (interface{}, error), candidateFn func(ctx context.Context) (interface{}, error)) {
 	start := time.Now()
-	defer fmt.Printf("Run experiment time elapsed: %s\n", time.Since(start))
+	defer func() {
+		fmt.Printf("Run experiment time elapsed: %s\n", time.Since(start))
+	}()
 
 	e := scientist.New("synchronous")
 	e.Use(controlFn)
@@ -65,7 +67,9 @@ func Run(controlFn func(ctx context.Context) (interface{}, error), candidateFn f
 
 func RunAsync(controlFn func(ctx context.Context) (interface{}, error), candidateFn func(ctx context.Context) (interface{}, error)) {
 	start := time.Now()
-	defer fmt.Printf("RunAsync experiment time elapsed: %s\n", time.Since(start))
+	defer func() {
+		fmt.Printf("RunAsync experiment time elapsed: %s\n", time.Since(start))
+	}()
 
 	e1 := scientist.New("asynchronous")
 	e1.Use(controlFn)
@@ -86,7 +90,9 @@ func RunAsync(controlFn func(ctx context.Context) (interface{}, error), candidat
 
 func RunAsyncCandidatesOnly(controlFn func(ctx context.Context) (interface{}, error), candidateFn func(ctx context.Context) (interface{}, error)) {
 	start := time.Now()
-	defer fmt.Printf("RunAsyncCandidatesOnly experiment time elapsed: %s\n", time.Since(start))
+	defer func() {
+		fmt.Printf("RunAsyncCandidatesOnly experiment time elapsed: %s\n", time.Since(start))
+	}()
 
 	e2 := scientist.New("asynchronousCandidatesOnly")
 	e2.Use(controlFn)
@@ -118,7 +124,7 @@ func publish(r scientist.Result) error {
 	return nil
 }
 
-func publishObservation(o *scientist.Observation) {
+func publishObservation(o *scientist.Observation[any]) {
 	fmt.Println("publishObservation", o)
 	fmt.Printf(" * %s\n", o.Name)
 	fmt.Printf("   value: %v\n", o.Value)

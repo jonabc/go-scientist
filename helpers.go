@@ -29,12 +29,11 @@ func (e *Experiment) Shuffle(behaviourName string, skip bool) []string {
 		behaviors = append(behaviors, name)
 	}
 
-	t := time.Now()
-	rand.Seed(int64(t.Nanosecond()))
+	r := rand.New(rand.NewSource(int64(time.Now().Nanosecond())))
 
 	arr := behaviors
 	for i := len(arr) - 1; i > 0; i-- {
-		j := rand.Intn(i)
+		j := r.Intn(i)
 		arr[i], arr[j] = arr[j], arr[i]
 	}
 	return arr
