@@ -20,15 +20,7 @@ func Bool(ok interface{}, err error) (bool, error) {
 }
 
 // Shuffle randomizes the behavior access.
-func (e *Experiment) Shuffle(behaviourName string, skip bool) []string {
-	var behaviors []string
-	for name := range e.behaviors {
-		if skip && (behaviourName == name) {
-			continue
-		}
-		behaviors = append(behaviors, name)
-	}
-
+func shuffle[T any](behaviors []T) []T {
 	r := rand.New(rand.NewSource(int64(time.Now().Nanosecond())))
 
 	arr := behaviors

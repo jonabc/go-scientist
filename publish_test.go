@@ -7,17 +7,19 @@ import (
 )
 
 func TestPublish(t *testing.T) {
-	e := New("publish")
-	e.Use(func(ctx context.Context) (interface{}, error) {
+	e := New[int]("publish")
+	e.Synchronous = true
+
+	e.Use(func(ctx context.Context) (int, error) {
 		return 1, nil
 	})
-	e.Try(func(ctx context.Context) (interface{}, error) {
+	e.Try(func(ctx context.Context) (any, error) {
 		return 2, nil
 	})
 
 	published := false
 	reported := false
-	e.Publish(func(r Result) error {
+	e.Publish(func(r *Result[int]) error {
 		published = true
 
 		if r.Experiment.Name != "publish" {
@@ -51,31 +53,31 @@ func TestPublish(t *testing.T) {
 }
 
 func TestPublishWithErrors(t *testing.T) {
-	e := New("publish")
-	e.Use(func(ctx context.Context) (interface{}, error) {
+	e := New[int]("publish")
+	e.Synchronous = true
+
+	e.Use(func(ctx context.Context) (int, error) {
 		return 1, nil
 	})
-	e.Try(func(ctx context.Context) (interface{}, error) {
+	e.Try(func(ctx context.Context) (any, error) {
 		return 2, nil
 	})
-	e.BeforeRun(func() error {
-		return fmt.Errorf("(before)")
-	})
-	e.Compare(func(control, candidate interface{}) (bool, error) {
+
+	e.Compare(func(control int, candidate any) (bool, error) {
 		return true, fmt.Errorf("(compare) candidate: %d", candidate)
 	})
 	// ignore callback 0, no error
-	e.Ignore(func(control, candidate interface{}) (bool, error) {
+	e.Ignore(func(control int, candidate any) (bool, error) {
 		return false, nil
 	})
 	// ignore callback 1, returns an error
-	e.Ignore(func(control, candidate interface{}) (bool, error) {
+	e.Ignore(func(control int, candidate any) (bool, error) {
 		return true, fmt.Errorf("(ignore) candidate: %d", candidate)
 	})
 
 	published := false
 	reported := make(map[string]int)
-	e.Publish(func(r Result) error {
+	e.Publish(func(r *Result[int]) error {
 		published = true
 		return fmt.Errorf("(publish) result: %s", r.Experiment.Name)
 	})
@@ -99,10 +101,6 @@ func TestPublishWithErrors(t *testing.T) {
 				if actual := err.Error(); actual != "(publish) result: publish" {
 					t.Errorf("Bad error message for publish operation: %q", actual)
 				}
-			case "before_run":
-				if actual := err.Error(); actual != "(before)" {
-					t.Errorf("Bad error message for before_run operation: %q", actual)
-				}
 			default:
 				t.Errorf("Bad operation: %q", err.Operation)
 			}
@@ -122,7 +120,7 @@ func TestPublishWithErrors(t *testing.T) {
 		t.Errorf("results never published")
 	}
 
-	if len(reported) != 4 {
+	if len(reported) != 3 {
 		t.Errorf("all result errors not reported: %v", reported)
 	}
 
