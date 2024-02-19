@@ -9,6 +9,8 @@ type Observation[TE any, TVal any] struct {
 	Runtime    time.Duration
 	Value      TVal
 	Err        error
+	Mismatched bool
+	Ignored    bool
 }
 
 func (o *Observation[TE, TVal]) CleanedValue() (interface{}, error) {

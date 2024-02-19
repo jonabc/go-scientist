@@ -49,8 +49,10 @@ func (r *Result[T]) finalize() {
 
 		if ignored {
 			r.Ignored = append(r.Ignored, candidate)
+			candidate.Ignored = true
 		} else {
 			r.Mismatched = append(r.Mismatched, candidate)
+			candidate.Mismatched = true
 		}
 	}
 }
