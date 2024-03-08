@@ -118,7 +118,7 @@ func (e *Experiment[T]) Run(ctx context.Context) (T, error) {
 		if e.Synchronous {
 			e.run(ctx, r)
 		} else {
-			go func() { e.run(ctx, r) }()
+			go e.run(ctx, r)
 		}
 	}
 
